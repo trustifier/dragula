@@ -4,6 +4,11 @@ var emitter = require('contra/emitter');
 var crossvent = require('crossvent');
 var classes = require('./classes');
 
+//TODO: FIX the scope of these two objects:
+var $D = window.Polymer.dom || function(e) { return e; };
+var $G = window.Polymer.Gestures || function(e) { return e; };
+//TODO END
+
 function dragula (initialContainers, options) {
   var len = arguments.length;
   if (len === 1 && Array.isArray(initialContainers) === false) {
@@ -130,16 +135,16 @@ function dragula (initialContainers, options) {
       return; // don't drag container itself
     }
     var handle = item;
-    while (item.parentElement && isContainer(item.parentElement) === false) {
+    while (item.parentNode && isContainer(item.parentNode) === false) {
       if (o.invalid(item, handle)) {
         return;
       }
-      item = item.parentElement; // drag target should be a top element
+      item = item.parentNode; // drag target should be a top element
       if (!item) {
         return;
       }
     }
-    var source = item.parentElement;
+    var source = item.parentNode;
     if (!source) {
       return;
     }
@@ -167,7 +172,7 @@ function dragula (initialContainers, options) {
 
   function start (context) {
     if (isCopy(context.item, context.source)) {
-      _copy = context.item.cloneNode(true);
+      _copy = $D(context.item).cloneNode(true);
       drake.emit('cloned', _copy, context.item, 'copy');
     }
 
@@ -188,7 +193,7 @@ function dragula (initialContainers, options) {
       return;
     }
     var item = _copy || _item;
-    drop(item, item.parentElement);
+    drop(item, item.parentNode);
   }
 
   function ungrab () {
@@ -231,9 +236,9 @@ function dragula (initialContainers, options) {
       return;
     }
     var item = _copy || _item;
-    var parent = item.parentElement;
+    var parent = $D(item).parentNode;
     if (parent) {
-      parent.removeChild(item);
+      $D(parent).removeChild(item);
     }
     drake.emit(_copy ? 'cancel' : 'remove', item, parent);
     cleanup();
@@ -245,9 +250,9 @@ function dragula (initialContainers, options) {
     }
     var reverts = arguments.length > 0 ? revert : o.revertOnSpill;
     var item = _copy || _item;
-    var parent = item.parentElement;
+    var parent = $D(item).parentNode;
     if (parent === _source && _copy) {
-      parent.removeChild(_copy);
+      $D(parent).removeChild(_copy);
     }
     var initial = isInitialPlacement(parent);
     if (initial === false && !_copy && reverts) {
@@ -292,7 +297,7 @@ function dragula (initialContainers, options) {
   function findDropTarget (elementBehindCursor, clientX, clientY) {
     var target = elementBehindCursor;
     while (target && !accepted()) {
-      target = target.parentElement;
+      target = target.parentNode; // this should be just the light dom
     }
     return target;
 
@@ -336,8 +341,8 @@ function dragula (initialContainers, options) {
       over();
     }
     if (dropTarget === _source && _copy) {
-      if (item.parentElement) {
-        item.parentElement.removeChild(item);
+      if (item.parentNode) {
+        item.parentNode.removeChild(item);
       }
       return;
     }
@@ -349,8 +354,8 @@ function dragula (initialContainers, options) {
       reference = _initialSibling;
       dropTarget = _source;
     } else {
-      if (_copy && item.parentElement) {
-        item.parentElement.removeChild(item);
+      if (_copy && item.parentNode) {
+        item.parentNode.removeChild(item);
       }
       return;
     }
@@ -361,6 +366,10 @@ function dragula (initialContainers, options) {
       reference !== _currentSibling
     ) {
       _currentSibling = reference;
+      console.log('item:', item);
+      console.log('target:', dropTarget);
+      console.log('reference', reference);
+      console.log('immediate', immediate);
       dropTarget.insertBefore(item, reference);
       drake.emit('shadow', item, dropTarget);
     }
@@ -382,12 +391,12 @@ function dragula (initialContainers, options) {
       return;
     }
     var rect = _item.getBoundingClientRect();
-    _mirror = _item.cloneNode(true);
+    _mirror = $D(_item).cloneNode(true);
     _mirror.style.width = getRectWidth(rect) + 'px';
     _mirror.style.height = getRectHeight(rect) + 'px';
     classes.rm(_mirror, 'gu-transit');
     classes.add(_mirror, 'gu-mirror');
-    o.mirrorContainer.appendChild(_mirror);
+    $D(o.mirrorContainer).appendChild(_mirror);
     touchy(documentElement, 'add', 'mousemove', drag);
     classes.add(o.mirrorContainer, 'gu-unselectable');
     drake.emit('cloned', _mirror, _item, 'mirror');
@@ -397,15 +406,16 @@ function dragula (initialContainers, options) {
     if (_mirror) {
       classes.rm(o.mirrorContainer, 'gu-unselectable');
       touchy(documentElement, 'remove', 'mousemove', drag);
-      _mirror.parentElement.removeChild(_mirror);
+      $D(_mirror).parentNode.removeChild(_mirror);
       _mirror = null;
     }
   }
 
   function getImmediateChild (dropTarget, target) {
     var immediate = target;
-    while (immediate !== dropTarget && immediate.parentElement !== dropTarget) {
-      immediate = immediate.parentElement;
+    // these should be lightDom
+    while (immediate !== dropTarget && immediate.parentNode !== dropTarget) {
+      immediate = immediate.parentNode;
     }
     if (immediate === documentElement) {
       return null;
@@ -415,7 +425,7 @@ function dragula (initialContainers, options) {
 
   function getReference (dropTarget, target, x, y) {
     var horizontal = o.direction === 'horizontal';
-    var reference = target !== dropTarget ? inside() : outside();
+    var reference = (target !== dropTarget) ? inside() : outside();
     return reference;
 
     function outside () { // slower, but able to figure out any position
@@ -432,7 +442,7 @@ function dragula (initialContainers, options) {
       return null;
     }
 
-    function inside () { // faster, but only available if dropped inside a child element
+    function inside () {
       var rect = target.getBoundingClientRect();
       if (horizontal) {
         return resolve(x > rect.left + getRectWidth(rect) / 2);
@@ -493,7 +503,7 @@ function getElementBehindPoint (point, x, y) {
   var state = p.className;
   var el;
   p.className += ' gu-hide';
-  el = document.elementFromPoint(x, y);
+  el = $G ? $G.deepTargetFind(x,y) : document.elementFromPoint(x, y);
   p.className = state;
   return el;
 }
