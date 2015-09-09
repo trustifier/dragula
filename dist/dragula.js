@@ -42,8 +42,8 @@ var crossvent = require('crossvent');
 var classes = require('./classes');
 
 //TODO: FIX the scope of these two objects:
-var $D = window.Polymer.dom || function(e) { return e; };
-var $G = window.Polymer.Gestures || function(e) { return e; };
+var $D = window.Polymer ? window.Polymer.dom : function(e) { return e; };
+var $G = window.Polymer ? window.Polymer.Gestures : null;
 //TODO END
 
 function dragula (initialContainers, options) {
@@ -385,7 +385,7 @@ function dragula (initialContainers, options) {
     }
     var reference;
     var immediate = getImmediateChild(dropTarget, elementBehindCursor);
-    if (immediate !== null) {
+    if (immediate !== null && immediate.nodeName !== '#document') {
       reference = getReference(dropTarget, immediate, clientX, clientY);
     } else if (o.revertOnSpill === true && !_copy) {
       reference = _initialSibling;
@@ -403,16 +403,26 @@ function dragula (initialContainers, options) {
       reference !== _currentSibling
     ) {
       _currentSibling = reference;
-      console.log('item:', item);
-      console.log('target:', dropTarget);
-      console.log('reference', reference);
-      console.log('immediate', immediate);
-      dropTarget.insertBefore(item, reference);
-      drake.emit('shadow', item, dropTarget);
+
+
+      if(!reference || isDescendant(dropTarget, reference)) {
+        dropTarget.insertBefore(item, reference);
+        drake.emit('shadow', item, dropTarget);
+      }
     }
     function moved (type) { drake.emit(type, item, _lastDropTarget, _source); }
     function over () { if (changed) { moved('over'); } }
     function out () { if (_lastDropTarget) { moved('out'); } }
+    function isDescendant(parent, child) {
+         var node = child.parentNode;
+         while (node !== null) {
+             if (node === parent) {
+                 return true;
+             }
+             node = node.parentNode;
+         }
+         return false;
+    }
   }
 
   function spillOver (el) {
@@ -433,7 +443,7 @@ function dragula (initialContainers, options) {
     _mirror.style.height = getRectHeight(rect) + 'px';
     classes.rm(_mirror, 'gu-transit');
     classes.add(_mirror, 'gu-mirror');
-    $D(o.mirrorContainer).appendChild(_mirror);
+    o.mirrorContainer.appendChild(_mirror);
     touchy(documentElement, 'add', 'mousemove', drag);
     classes.add(o.mirrorContainer, 'gu-unselectable');
     drake.emit('cloned', _mirror, _item, 'mirror');
