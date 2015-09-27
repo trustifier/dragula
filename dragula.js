@@ -256,7 +256,7 @@ function dragula (initialContainers, options) {
     }
     var initial = isInitialPlacement(parent);
     if (initial === false && !_copy && reverts) {
-      _source.insertBefore(item, _initialSibling);
+      $D(_source).insertBefore($D(item), $D(_initialSibling));
     }
     if (initial || reverts) {
       drake.emit('cancel', item, _source);
@@ -341,8 +341,8 @@ function dragula (initialContainers, options) {
       over();
     }
     if (dropTarget === _source && _copy) {
-      if (item.parentNode) {
-        item.parentNode.removeChild(item);
+      if ($D(item).parentNode) {
+        $D(item).parentNode.removeChild(item);
       }
       return;
     }
@@ -354,8 +354,8 @@ function dragula (initialContainers, options) {
       reference = _initialSibling;
       dropTarget = _source;
     } else {
-      if (_copy && item.parentNode) {
-        item.parentNode.removeChild(item);
+      if (_copy && $D(item).parentNode) {
+        $D(item).parentNode.removeChild(item);
       }
       return;
     }
@@ -369,7 +369,7 @@ function dragula (initialContainers, options) {
 
 
       if(!reference || isDescendant(dropTarget, reference)) {
-        dropTarget.insertBefore(item, reference);
+        $D(dropTarget).appendChild(item);
         drake.emit('shadow', item, dropTarget);
       }
     }
