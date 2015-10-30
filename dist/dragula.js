@@ -210,7 +210,7 @@ function dragula (initialContainers, options) {
   function start (context) {
     if (isCopy(context.item, context.source)) {
       _copy = $D(context.item).cloneNode(true);
-      drake.emit('cloned', _copy, context.item, 'copy');
+      drake.emit('cloned', context.item, _copy, context.source);
     }
 
     _source = context.source;
