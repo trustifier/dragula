@@ -172,16 +172,16 @@ function dragula (initialContainers, options) {
             return; // don't drag container itself
         }
         var handle = item;
-        while (item.parentNode && isContainer(item.parentNode) === false) {
+        while (item.parentElement && isContainer(item.parentElement) === false) {
             if (o.invalid(item, handle)) {
                 return;
             }
-            item = item.parentNode; // drag target should be a top element
+            item = item.parentElement; // drag target should be a top element
             if (!item) {
                 return;
             }
         }
-        var source = item.parentNode;
+        var source = item.parentElement;
         if (!source) {
             return;
         }
@@ -212,6 +212,7 @@ function dragula (initialContainers, options) {
             _copy = $D(context.item).cloneNode(true);
             _copy['data'] = context.item['data'];
             drake.emit('cloned', context.item, _copy, context.source);
+            drake.emit('cloned', _copy, context.item, 'copy');
         }
 
         _source = context.source;
@@ -231,7 +232,7 @@ function dragula (initialContainers, options) {
             return;
         }
         var item = _copy || _item;
-        drop(item, item.parentNode);
+        drop(item, item.parentElement);
     }
 
     function ungrab () {
@@ -274,7 +275,7 @@ function dragula (initialContainers, options) {
             return;
         }
         var item = _copy || _item;
-        var parent = $D(item).parentNode;
+        var parent = $D(item).parentElement;
         if (parent) {
             $D(parent).removeChild(item);
         }
@@ -288,7 +289,7 @@ function dragula (initialContainers, options) {
         }
         var reverts = arguments.length > 0 ? revert : o.revertOnSpill;
         var item = _copy || _item;
-        var parent = $D(item).parentNode;
+        var parent = $D(item).parentElement;
         if (parent === _source && _copy) {
             $D(parent).removeChild(_copy);
         }
@@ -335,7 +336,7 @@ function dragula (initialContainers, options) {
     function findDropTarget (elementBehindCursor, clientX, clientY) {
         var target = elementBehindCursor;
         while (target && !accepted()) {
-            target = target.parentNode; // this should be just the light dom
+            target = target.parentElement; // this should be just the light dom
         }
         return target;
 
@@ -379,8 +380,8 @@ function dragula (initialContainers, options) {
             over();
         }
         if (dropTarget === _source && _copy) {
-            if ($D(item).parentNode) {
-                $D(item).parentNode.removeChild(item);
+            if ($D(item).parentElement) {
+                $D(item).parentElement.removeChild(item);
             }
             return;
         }
@@ -392,8 +393,8 @@ function dragula (initialContainers, options) {
             reference = _initialSibling;
             dropTarget = _source;
         } else {
-            if (_copy && $D(item).parentNode) {
-                $D(item).parentNode.removeChild(item);
+            if (_copy && $D(item).parentElement) {
+                $D(item).parentElement.removeChild(item);
             }
             return;
         }
@@ -415,12 +416,12 @@ function dragula (initialContainers, options) {
         function over () { if (changed) { moved('over'); } }
         function out () { if (_lastDropTarget) { moved('out'); } }
         function isDescendant(parent, child) {
-            var node = child.parentNode;
+            var node = child.parentElement;
             while (node !== null) {
                 if (node === parent) {
                     return true;
                 }
-                node = node.parentNode;
+                node = node.parentElement;
             }
             return false;
         }
@@ -455,7 +456,7 @@ function dragula (initialContainers, options) {
         if (_mirror) {
             classes.rm(o.mirrorContainer, 'gu-unselectable');
             touchy(documentElement, 'remove', 'mousemove', drag);
-            $D(_mirror).parentNode.removeChild(_mirror);
+            $D(_mirror).parentElement.removeChild(_mirror);
             _mirror = null;
         }
     }
@@ -463,8 +464,8 @@ function dragula (initialContainers, options) {
     function getImmediateChild (dropTarget, target) {
         var immediate = target;
         // these should be lightDom
-        while (immediate !== dropTarget && immediate.parentNode !== dropTarget) {
-            immediate = immediate.parentNode;
+        while (immediate !== dropTarget && immediate.parentElement !== dropTarget) {
+            immediate = immediate.parentElement;
         }
         if (immediate === documentElement) {
             return null;
