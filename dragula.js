@@ -135,16 +135,16 @@ function dragula (initialContainers, options) {
             return; // don't drag container itself
         }
         var handle = item;
-        while (item.parentElement && isContainer(item.parentElement) === false) {
+        while (item.parentNode && isContainer(item.parentNode) === false) {
             if (o.invalid(item, handle)) {
                 return;
             }
-            item = item.parentElement; // drag target should be a top element
+            item = item.parentNode; // drag target should be a top element
             if (!item) {
                 return;
             }
         }
-        var source = item.parentElement;
+        var source = item.parentNode;
         if (!source) {
             return;
         }
@@ -195,7 +195,7 @@ function dragula (initialContainers, options) {
             return;
         }
         var item = _copy || _item;
-        drop(item, item.parentElement);
+        drop(item, item.parentNode);
     }
 
     function ungrab () {
@@ -238,7 +238,7 @@ function dragula (initialContainers, options) {
             return;
         }
         var item = _copy || _item;
-        var parent = $D(item).parentElement;
+        var parent = $D(item).parentNode;
         if (parent) {
             $D(parent).removeChild(item);
         }
@@ -252,7 +252,7 @@ function dragula (initialContainers, options) {
         }
         var reverts = arguments.length > 0 ? revert : o.revertOnSpill;
         var item = _copy || _item;
-        var parent = $D(item).parentElement;
+        var parent = $D(item).parentNode;
         if (parent === _source && _copy) {
             $D(parent).removeChild(_copy);
         }
@@ -299,7 +299,7 @@ function dragula (initialContainers, options) {
     function findDropTarget (elementBehindCursor, clientX, clientY) {
         var target = elementBehindCursor;
         while (target && !accepted()) {
-            target = target.parentElement; // this should be just the light dom
+            target = target.parentNode; // this should be just the light dom
         }
         return target;
 
@@ -343,8 +343,8 @@ function dragula (initialContainers, options) {
             over();
         }
         if (dropTarget === _source && _copy) {
-            if ($D(item).parentElement) {
-                $D(item).parentElement.removeChild(item);
+            if ($D(item).parentNode) {
+                $D(item).parentNode.removeChild(item);
             }
             return;
         }
@@ -356,8 +356,8 @@ function dragula (initialContainers, options) {
             reference = _initialSibling;
             dropTarget = _source;
         } else {
-            if (_copy && $D(item).parentElement) {
-                $D(item).parentElement.removeChild(item);
+            if (_copy && $D(item).parentNode) {
+                $D(item).parentNode.removeChild(item);
             }
             return;
         }
@@ -372,6 +372,7 @@ function dragula (initialContainers, options) {
 
             if(!reference || isDescendant(dropTarget, reference)) {
                 $D(dropTarget).appendChild(item);
+                $D.flush();
                 drake.emit('shadow', item, dropTarget);
             }
         }
@@ -379,12 +380,12 @@ function dragula (initialContainers, options) {
         function over () { if (changed) { moved('over'); } }
         function out () { if (_lastDropTarget) { moved('out'); } }
         function isDescendant(parent, child) {
-            var node = child.parentElement;
+            var node = child.parentNode;
             while (node !== null) {
                 if (node === parent) {
                     return true;
                 }
-                node = node.parentElement;
+                node = node.parentNode;
             }
             return false;
         }
@@ -419,7 +420,7 @@ function dragula (initialContainers, options) {
         if (_mirror) {
             classes.rm(o.mirrorContainer, 'gu-unselectable');
             touchy(documentElement, 'remove', 'mousemove', drag);
-            $D(_mirror).parentElement.removeChild(_mirror);
+            $D(_mirror).parentNode.removeChild(_mirror);
             _mirror = null;
         }
     }
@@ -427,8 +428,8 @@ function dragula (initialContainers, options) {
     function getImmediateChild (dropTarget, target) {
         var immediate = target;
         // these should be lightDom
-        while (immediate !== dropTarget && immediate.parentElement !== dropTarget) {
-            immediate = immediate.parentElement;
+        while (immediate !== dropTarget && immediate.parentNode !== dropTarget) {
+            immediate = immediate.parentNode;
         }
         if (immediate === documentElement) {
             return null;
